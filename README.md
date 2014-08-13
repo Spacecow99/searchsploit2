@@ -23,10 +23,10 @@ Usage
 
 ##Examples
 
-```python searchsploit.py --platform windows --type remote MS08-067
-python searchsploit.py -v -o plan9 -t remote
-python searchsploit.py --date 2014-01-01 -p 80
-python searchsploit.py```
+    python searchsploit.py --platform windows --type remote MS08-067
+    python searchsploit.py -v -o plan9 -t remote
+    python searchsploit.py --date 2014-01-01 -p 80
+    python searchsploit.py
 
 Issues
 ======
