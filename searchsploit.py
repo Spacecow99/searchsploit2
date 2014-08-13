@@ -1,32 +1,13 @@
 #!/usr/bin/env python
+#
+# Copyright (c) 2014, Jacques Pharand <phar0032@algonquinlive.com>
+# This is Free Software. See LICENSE for license information.
 
-################################################################################
-#The MIT License (MIT)
-#
-#Copyright (c) 2014 Jacques Pharand
-#
-#Permission is hereby granted, free of charge, to any person obtaining a copy
-#of this software and associated documentation files (the "Software"), to deal
-#in the Software without restriction, including without limitation the rights
-#to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#copies of the Software, and to permit persons to whom the Software is
-#furnished to do so, subject to the following conditions:
-#
-#The above copyright notice and this permission notice shall be included in
-#all copies or substantial portions of the Software.
-#
-#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#THE SOFTWARE.
-################################################################################
+# Replace with Sphynx style documentation
+__author__  = "Jacques Pharand"
+__date__    = "12/08/2014"
+__version__ = "0.4"
 
-__author__  = "Spacecow"
-__date__    = "1/13/14"
-__version__ = "0.2"
 
 import os
 import sys
@@ -41,15 +22,21 @@ DESCRIPTION    = """Search the ExploitDB more precisely without changing any exi
 BANNER         = " Description%sPath\n%s %s\n" % ((" " * 70), ("-" * 80), ("-" * 25))
 
 
+#def update():
+#
+#    repo = "https://raw.githubusercontent.com/offensive-security/exploit-database/master/files.csv"
+#    print("[ ok ]  ExploitDB git repo cloned successfully.")
+
+
 def formatString(description, location):
-    """Format each entry for pretty."""
+    """Format each entry to match the original searchsploit formatting."""
     if len(description) < 80:
         while len(description) != 80:
             description += " "
     return "%s %s\n" % (description, location[9:])
 
-# Rename this function
-def parseListForRegex(list, regex):
+
+def searchDescriptionField(list, regex):
     """Search the description field for a keyword regex match."""
     _temp = []
     for item in list:
@@ -57,47 +44,83 @@ def parseListForRegex(list, regex):
         if match == None: pass
         else:
             _temp.append(item)
-            #print("We have a match %s -> %s" % (regex, item[2]))
     return _temp
 
-# Rename this function
-def parseListItems(list, value, position):
-    """Function used to whittle down the entries to search."""
+
+def searchCsvColumn(list, value, column):
+    """Search for value in a desired column"""
     _temp = []
     for item in list:
-        if item[position] == value:
+        if item[column].lower() == value.lower():
             _temp.append(item)
     return _temp
+
+
+def verboseStatus(length, verbose, action):
+    if length == 0 and verbose:
+        print("[ fail ] %s search found no results" % action)
+    elif length > 0 and verbose:
+        print("[ ok ] %s search succeded" % action)
 
 
 def main():
     parser = argparse.ArgumentParser(prog="searchsploit2", description=DESCRIPTION)
     parser.add_argument("TERM", nargs="*", action="store", help="Terms to search for in exploit description")
-    parser.add_argument("--platform","-p", metavar="PLATFORM", action="store",help="Platform/OS to search")
+    parser.add_argument("--date", "-d", metavar="YYYY-MM-DD", action="store", help="Exploits published on or after YYYY-MM-DD")
+    parser.add_argument("--platform","-o", metavar="PLATFORM", action="store",help="Platform/OS to search")
+    parser.add_argument("--port", "-p", metavar="PORT", action="store", help="Affected port number")
     parser.add_argument("--type", "-t", metavar="TYPE", action="store", help="Type of exploit to search")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Turn on verbose output")
+    #parser.add_argument("--update", "-u", action='store_true', help="Update your local ExploitDB copy")
     args = parser.parse_args()
 
     if os.path.isfile(CSV_FILE) is False:
-        print >> sys.stderr, "[!] ExploitDB csv %s could not be found." % CSV_FILE
+        sys.stderr.write("%s: ExploitDB CSV file %s could not be found: Exiting now" % (sys.argv[0], CSV_FILE))
         sys.exit(1)
 		
+    if not args.platform and not args.type and not args.date and not args.port and len(args.TERM) == 0:  # This is a really nasty line...
+        i = raw_input("Would you like to display all entries? [y/N] ")
+        if i.lower() == 'y' or i.lower() == 'yes':
+            pass
+        else:
+            sys.exit(0)
+
     masterList = []
     with open(CSV_FILE, "rb") as f:
         reader = csv.reader(f)
         for row in reader:
             masterList.append(row)
 
+    if args.date:
+        skipFirstRow, _temp = True, []
+        for row in masterList:
+            if len(_temp) == 0 and skipFirstRow:
+                skipFirstRow = False
+                continue
+            publishDate = str(row[-5]).split('-')
+            searchDate = args.date.split('-')
+            if int(publishDate[0]) >= int(searchDate[0]) and int(publishDate[1]) >= int(searchDate[1]) and int(publishDate[2]) >= int(searchDate[2]):
+                _temp.append(row)
+        masterList = _temp
+        verboseStatus(len(masterList), args.verbose, "Publish date")
+
     if args.platform:
-        masterList = parseListItems(masterList, args.platform, 5)
+        masterList = searchCsvColumn(masterList, args.platform, 5)
+        verboseStatus(len(masterList), args.verbose, "Platform search")
+
+    if args.port:
+        masterList = searchCsvColumn(masterList, args.port, -1)
+        verboseStatus(len(masterList), args.verbose, "Port")
 
     if args.type:
-        masterList = parseListItems(masterList, args.type, -2)
+        masterList = searchCsvColumn(masterList, args.type, -2)
+        verboseStatus(len(masterList), args.verbose, "Exploit type")
 
     for term in args.TERM:
         try:
-            masterList = parseListForRegex(masterList, term)
+            masterList = searchDescriptionField(masterList, term)
         except:
-            print('[!] Caught an unknown exception during regex search.')
+            sys.stderr.write('%s: Caught an unknown exception during regex search: Exiting now' % sys.argv[0])
             sys.exit(2)
 
     output = BANNER
