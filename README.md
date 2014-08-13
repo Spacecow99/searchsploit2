@@ -1,6 +1,8 @@
 Searchsploit 2
 ==============
 
+Sort of like a command-line Google for your exploits. You do publish your PoCs right?
+
 ##Description
 
 An alternative to the original searchsploit script that provides a finer level of control as well as verbose output for help find
@@ -21,10 +23,10 @@ Usage
 
 ##Examples
 
-`python searchsploit.py --platform windows --type remote MS08-067`
-`python searchsploit.py -v -o plan9 -t remote`
-`python searchsploit.py --date 2014-01-01 -p 80`
-`python searchsploit.py`
+```python searchsploit.py --platform windows --type remote MS08-067
+python searchsploit.py -v -o plan9 -t remote
+python searchsploit.py --date 2014-01-01 -p 80
+python searchsploit.py```
 
 Issues
 ======
