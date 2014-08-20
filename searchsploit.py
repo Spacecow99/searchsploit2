@@ -15,6 +15,7 @@ import argparse
 import string
 import csv
 import re
+import urllib2
 
 
 CSV_FILE       = "%s/files.csv" % os.getcwd()  # Change this variable to a absolute path if desired.
@@ -22,11 +23,22 @@ DESCRIPTION    = """Search the ExploitDB more precisely without changing any exi
 BANNER         = " Description%sPath\n%s %s\n" % ((" " * 70), ("-" * 80), ("-" * 25))
 
 
-#def update():
-#
-#    repo = "https://raw.githubusercontent.com/offensive-security/exploit-database/master/files.csv"
-#    print("[ ok ]  ExploitDB git repo cloned successfully.")
+def update():
 
+    repo = "https://raw.githubusercontent.com/offensive-security/exploit-database/master/files.csv"
+    print("[ ok ] Attempting to update local files.csv")
+    try:
+        s = urllib2.urlopen(repo)
+        f = open(CSV_FILE, 'w')
+        f.write(s.read())
+        f.close()
+        print("[ ok ] ExploidDB updated successfully")
+    except(IOError):
+        sys.stderr.write("[ fail ] ExploitDB file could not be written")
+    except(urllib2.URLError):
+        sys.stderr.write("[ fail ] Could not contact ExploitDB git repo")
+    finally:
+        sys.exit()
 
 def formatString(description, location):
     """Format each entry to match the original searchsploit formatting."""
@@ -70,15 +82,18 @@ def main():
     parser.add_argument("--platform","-o", metavar="PLATFORM", action="store",help="Platform/OS to search")
     parser.add_argument("--port", "-p", metavar="PORT", action="store", help="Affected port number")
     parser.add_argument("--type", "-t", metavar="TYPE", action="store", help="Type of exploit to search")
+    parser.add_argument("--update", "-u", action='store_true', help="Update your local ExploitDB copy")
     parser.add_argument("--verbose", "-v", action="store_true", help="Turn on verbose output")
-    #parser.add_argument("--update", "-u", action='store_true', help="Update your local ExploitDB copy")
     args = parser.parse_args()
 
     if os.path.isfile(CSV_FILE) is False:
         sys.stderr.write("%s: ExploitDB CSV file %s could not be found: Exiting now" % (sys.argv[0], CSV_FILE))
         sys.exit(1)
+
+    if args.update:
+        update()
 		
-    if not args.platform and not args.type and not args.date and not args.port and len(args.TERM) == 0:  # This is a really nasty line...
+    if not args.platform and not args.type and not args.date and not args.port and len(args.TERM) == 0:
         i = raw_input("Would you like to display all entries? [y/N] ")
         if i.lower() == 'y' or i.lower() == 'yes':
             pass
@@ -126,7 +141,7 @@ def main():
     output = BANNER
     for line in masterList:
         output += formatString(line[2], line[1])
-    print string.rstrip(output)
+    print(string.rstrip(output))
 
 
 if __name__ == "__main__":
