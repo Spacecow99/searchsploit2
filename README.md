@@ -1,45 +1,41 @@
-Searchsploit 2
+Searchsploit2
 ==============
 
-Sort of like a command-line Google for your exploits. You do publish your PoCs right?
+A command-line script to provide fine grain search queries to specific fields in the exploit-database. 
 
 ##Description
 
 An alternative to the original searchsploit script that provides a finer level of control as well as verbose output for help find
-where your searches are going wrong. Usefull if you're like me and wondering how you got a Plan9 local privellege escalation PoC when 
-searching for a remote exploit for Windows... 
+where your searches are going wrong. The search logic searches by `author => date => platform => type => port => description`. Searchsploit2 also supports updating your local exploit-database CSV copy and mimicks the output format of the original searchsploit script.
 
 Usage
 =====
 
-`python searchsploit.py [-v] [-dopt VALUE] [term ...]`
+	searchsploit2 [-h] [--file PATH] [--author AUTHOR] [--date YYYY-MM-DD]
+	[--platform PLATFORM] [--type TYPE] [--port PORT] [--description TERM]
+	[--update] [--verbose] [--version]
 
-* `--verbose/-v` Verbose output telling you if and where your query failed.
-* `--date/-d YYYY-MM-DD` Search for exploits published on or before YYYY-MM-DD.
-* `--platform/-o PLATFORM` Search exploits by platform/OS.
-* `--port/-p PORT` Search exploits by affected port number (0 for local/irrelevant).
-* `--type/-t TYPE` Search exploits by type e.g remote, local, dos, etc.
-* `TERM` String to search for in exploit description.
+* `--file/-f PATH` Path to exploit-db CSV file.
+* `--author/-a AUTHOR` Search for exploit author's name.
+* `--date/-d YYYY-MM-DD` Search for exploits published on YYYY-MM-DD.
+* `--platform/-o PLATFORM` Search exploits by platform / OS.
+* `--type/-t TYPE` Search by exploit type.
+* `--port/-p PORT` Search exploits by affected port number.
+* `--description/-d TERM` Search exploit description for term.
+* `--update/-u` Update local copy of exploit-db and exit.
+* `--verbose/-v` Enable verbose output to track troublesome queries.
+* `--version` Show program's version number and exit.
 
 ##Examples
 
-    python searchsploit.py --platform windows --type remote MS08-067
-    python searchsploit.py -v -o plan9 -t remote
-    python searchsploit.py --date 2014-01-01 -p 80
-    python searchsploit.py
+    python3 searchsploit2.py --platform windows --type remote --description MS08-067
+    python3 searchsploit2.py -v -o plan9 -t remote
+    python3 searchsploit2.py --date 2014-01-01 -p 80
+    python3 searchsploit2.py --author TurboBorland --file ~/.searchsploit2/files.csv
 
 Issues
 ======
 
-Currently the functionality to download a copy of the latest files.csv (the ExploitDB) is not complete therefor it requires that
-the user either download it himself or already have a copy of the original searchsploit tool installed. This tool does not provide
-the actual PoC files, simply a way to search for those in the current copy of files.csv available to it at the time.
+Currently the search functionality does not accept regular expressions such as " * ", this feature may be implemented in the future. Please report any additional issues found to `https://github.com/Spacecow99/searchsploit/issues`.
 
-TODO
-====
 
-* Add `--update/-u` argument to download the current copy of files.csv from Offensive Security.
-* Add `--yes/-y` argument to skip prompt when invoking searchsploit2 with no search parameters.
-* Update `--date/-d` option in order to validate that YYYY-MM-DD parameter is in the proper format.
-* Replace current docstrings with proper sphynx style documentation because standards.
-* Add more llamas, not enough llama's in InfoSec... What's wrong with you people? 
